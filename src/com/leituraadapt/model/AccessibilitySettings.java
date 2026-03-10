@@ -1,4 +1,4 @@
-package com.leituraadapt.domain;
+package com.leituraadapt.model;
 
 import java.util.Objects;
 
