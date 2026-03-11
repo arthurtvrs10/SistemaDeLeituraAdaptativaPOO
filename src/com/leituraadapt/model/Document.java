@@ -28,7 +28,7 @@ public class Document {
   public String getTitle(){
     return this.title;
   }
-  public String getcontent(){
+  public String getContent(){
     return this.content;
   }
 

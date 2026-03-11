@@ -5,6 +5,9 @@ import com.leituraadapt.model.AccessibilitySettings;
 import com.leituraadapt.model.Document;
 import com.leituraadapt.model.Theme;
 import com.leituraadapt.repository.DocumentRepository;
+import com.leituraadapt.dto.WizardAnswers;
+import com.leituraadapt.service.WizardService;
+import com.leituraadapt.service.ProfileService;
 
 public class App {
 
@@ -13,7 +16,7 @@ public class App {
   public void run() {
     System.out.println("App iniciado com sucesso!");
 
-    // ===== Teste Dia 5 - Imutabilidade =====
+    // ===== Teste Dia 5 - SETTINGS =====
     AccessibilitySettings s1 = AccessibilitySettings.defaults();
     AccessibilitySettings s2 = s1.withFontSize(22);
 
@@ -33,9 +36,36 @@ public class App {
             .withTheme(Theme.HIGH_CONTRAST);
 
     AccessibilityProfile profile2 = profile1.withSettings(customSettings);
-
     System.out.println(profile1);
     System.out.println(profile2);
+
+    // ===== Teste Dia 7 - WizardService =====
+    WizardService wizardService = new WizardService();
+    WizardAnswers answers = new WizardAnswers(
+            false, // screenReader
+            true,  // lowVision
+            true,  // dyslexia
+            true,  // attentionDifficulty
+            true,  // reducedMotionPreference
+            true   // keyboardPreferred
+    );
+    AccessibilityProfile recommendProfile =
+            wizardService.recommendProfile("Perfil Recomendado", answers);
+    System.out.println("Perfil recomendado pelo wizard:");
+    System.out.println(recommendProfile);
+
+    // ===== Teste Dia 8 - ProfileService =====
+    ProfileService profileService = new ProfileService();
+
+    AccessibilityProfile defaultProfile = profileService.createDefaultProfile("Perfil Padrão");
+    profileService.save(new AccessibilityProfile("Baixa Visão", customSettings));
+
+    System.out.println("Perfis Cadastrados: ");
+    profileService.findAll().forEach(System.out::println);
+
+    System.out.println("Buscando perfil pelo nome:");
+    System.out.println(profileService.findByName("Baixa Visão"));
+
   }
 
   private void seedDocuments() {
