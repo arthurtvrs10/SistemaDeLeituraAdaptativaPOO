@@ -6,8 +6,11 @@ import com.leituraadapt.model.Document;
 import com.leituraadapt.model.Theme;
 import com.leituraadapt.repository.DocumentRepository;
 import com.leituraadapt.dto.WizardAnswers;
+import com.leituraadapt.service.ReadingSession;
 import com.leituraadapt.service.WizardService;
 import com.leituraadapt.service.ProfileService;
+
+import java.util.List;
 
 public class App {
 
@@ -17,6 +20,7 @@ public class App {
     System.out.println("App iniciado com sucesso!");
 
     // ===== Teste Dia 5 - SETTINGS =====
+    System.out.println("\n\n\n ===== Teste Dia 5 - SETTINGS =====");
     AccessibilitySettings s1 = AccessibilitySettings.defaults();
     AccessibilitySettings s2 = s1.withFontSize(22);
 
@@ -28,6 +32,7 @@ public class App {
     listDocuments();
 
     // ===== Teste Dia 6 - AccessibilityProfile =====
+    System.out.println("\n\n\n ====== Teste Dia 6 - AccessibilityProfile =====");
     AccessibilityProfile profile1 = AccessibilityProfile.defaultProfile("Padrão");
 
     AccessibilitySettings customSettings = profile1.getSettings()
@@ -40,6 +45,7 @@ public class App {
     System.out.println(profile2);
 
     // ===== Teste Dia 7 - WizardService =====
+    System.out.println("\n\n\n ===== Teste Dia 7 - WizardService =====");
     WizardService wizardService = new WizardService();
     WizardAnswers answers = new WizardAnswers(
             false, // screenReader
@@ -55,6 +61,7 @@ public class App {
     System.out.println(recommendProfile);
 
     // ===== Teste Dia 8 - ProfileService =====
+    System.out.println("\n\n\n ===== Teste Dia 8 - ProfileService =====");
     ProfileService profileService = new ProfileService();
 
     AccessibilityProfile defaultProfile = profileService.createDefaultProfile("Perfil Padrão");
@@ -66,7 +73,28 @@ public class App {
     System.out.println("Buscando perfil pelo nome:");
     System.out.println(profileService.findByName("Baixa Visão"));
 
+    // ===== Teste Dia 9 - ReadingSession =====
+    System.out.println("\n\n\n ===== Teste Dia 9 - ReadingSession =====");
+    Document document = documentRepository.findById("doc1").orElseThrow(() -> new RuntimeException("Documento nao encontrado") );
+    AccessibilityProfile profile = AccessibilityProfile.defaultProfile("Teste");
+
+    List<String> lines = List.of(
+            "Linha 1", "Linha 2", "Linha 3", "Linha 4", "Linha 5",
+            "Linha 6", "Linha 7", "Linha 8", "Linha 9", "Linha 10",
+            "Linha 11", "Linha 12"
+    );
+
+    ReadingSession Session = new ReadingSession(document, profile, lines, 5, 0);
+    System.out.println(Session.currentPage());
+    Session.nextPage();
+    System.out.println(Session.currentPage());
+    Session.prevPage();
+    System.out.println(Session.currentPage());
+
+
   }
+
+
 
   private void seedDocuments() {
     documentRepository.save(new Document(
