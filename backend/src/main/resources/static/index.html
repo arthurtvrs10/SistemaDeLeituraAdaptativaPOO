@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leitura Adaptativa</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 900px;
+          margin: 40px auto;
+          padding: 0 16px;
+          line-height: 1.6;
+        }
+
+        .controls {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
+        }
+
+        input, button {
+          padding: 10px;
+          font-size: 16px;
+        }
+
+        .reader {
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          padding: 20px;
+          min-height: 250px;
+          background: #fafafa;
+        }
+
+        .meta {
+          margin: 16px 0;
+          color: #555;
+        }
+
+        .nav {
+          margin-top: 20px;
+          display: flex;
+          gap: 10px;
+        }
+
+        .line {
+          margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<h1>Sistema de Leitura Adaptativa</h1>
+
+<div class="controls">
+    <input id="userId" value="user1" placeholder="User ID" />
+    <input id="documentId" value="doc3" placeholder="Document ID" />
+    <input id="pageSize" type="number" value="2" min="1" />
+    <button onclick="loadReading()">Abrir leitura</button>
+</div>
+
+<h2 id="title">Título</h2>
+<div class="meta" id="meta"></div>
+
+<div class="reader" id="reader"></div>
+
+<div class="nav">
+    <button onclick="prevPage()">Página anterior</button>
+    <button onclick="nextPage()">Próxima página</button>
+</div>
+
+<script>
+    let currentPage = 0;
+    let totalPages = 0;
+    let currentDocumentId = "doc3";
+    let currentUserId = "user1";
+    let currentPageSize = 2;
+
+    async function loadReading(page = null) {
+      currentUserId = document.getElementById("userId").value;
+      currentDocumentId = document.getElementById("documentId").value;
+      currentPageSize = parseInt(document.getElementById("pageSize").value, 10);
+
+      let url = `/api/reading/${currentDocumentId}?userId=${currentUserId}&pageSize=${currentPageSize}`;
+
+      if (page !== null) {
+        url += `&page=${page}`;
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      document.getElementById("title").textContent = data.documentTitle;
+      document.getElementById("meta").textContent =
+        `Página ${data.currentPage + 1} de ${data.totalPages} | Total de linhas: ${data.totalLines}`;
+
+      const reader = document.getElementById("reader");
+      reader.innerHTML = "";
+
+      data.lines.forEach(line => {
+        const div = document.createElement("div");
+        div.className = "line";
+        div.textContent = line;
+        reader.appendChild(div);
+      });
+
+      currentPage = data.currentPage;
+      totalPages = data.totalPages;
+
+      await saveProgress();
+    }
+
+    async function saveProgress() {
+      await fetch("/api/progress", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId: currentUserId,
+          documentId: currentDocumentId,
+          currentPage: currentPage,
+          pageSize: currentPageSize
+        })
+      });
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages - 1) {
+        loadReading(currentPage + 1);
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        loadReading(currentPage - 1);
+      }
+    }
+</script>
+</body>
+</html>

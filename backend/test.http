@@ -1,0 +1,14 @@
+const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhcnRodXJAZW1haWwuY29tIiwiaWF0IjoxNzc0NDQ4MjE0LCJleHAiOjE3NzQ0NTE4MTR9.yNx9uWN1RjoiovZq8cd0uV5JQtjSCgZN-KuJwqpaWwQ";
+
+fetch("http://localhost:8080/api/reading/doc1/me", {
+  method: "GET",
+  headers: {
+    "Authorization": "Bearer " + token
+  }
+})
+.then(async res => {
+  console.log("status:", res.status);
+  const data = await res.text();
+  console.log("body:", data);
+})
+.catch(err => console.error(err));
