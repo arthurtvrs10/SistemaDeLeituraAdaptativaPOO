@@ -17,11 +17,21 @@ export default function Login() {
     password: '',
   });
 
+  const [error, setError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  setError("");
+
+  try {
     await login(formData.email, formData.password);
-    router.push('/dashboard');
-  };
+    console.log("TOKEN APÓS LOGIN:", localStorage.getItem("auth-token"));
+    router.push("/dashboard");
+  } catch (err) {
+    console.error("Falha no login:", err);
+    setError("Email ou senha inválidos, ou o backend não está disponível.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -33,7 +43,7 @@ export default function Login() {
           <h1 className="text-xl font-semibold text-gray-900">Acesse sua Conta</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 text-gray-900">
           <Input
             label="Email"
             type="email"
@@ -49,8 +59,12 @@ export default function Login() {
             required
           />
           <Button type="submit" className="w-full">Entrar</Button>
+          
+          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         </form>
+
         
+
         <div className="mt-4 text-center">
            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-blue-600">
              Continuar sem login
