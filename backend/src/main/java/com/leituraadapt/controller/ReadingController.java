@@ -22,9 +22,11 @@ public class ReadingController {
     private final AccessibilityProfileService accessibilityProfileService;
     private final TextWrapper textWrapper;
 
-    public ReadingController(DocumentService documentService,
-                             ReadingProgressService readingProgressService,
-                             AccessibilityProfileService accessibilityProfileService) {
+    public ReadingController(
+            DocumentService documentService,
+            ReadingProgressService readingProgressService,
+            AccessibilityProfileService accessibilityProfileService
+    ) {
         this.documentService = documentService;
         this.readingProgressService = readingProgressService;
         this.accessibilityProfileService = accessibilityProfileService;
@@ -34,8 +36,11 @@ public class ReadingController {
     @GetMapping("/{id}")
     public ReadingResponseDTO read(
             @PathVariable String id,
-            @RequestParam(defaultValue = "5") int pageSize,
-            @RequestParam(required = false) Integer page
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer fontSize,
+            @RequestParam(required = false) Double lineHeight,
+            @RequestParam(required = false) Integer columnWidth,
+            @RequestParam(required = false, defaultValue = "false") boolean dyslexiaMode
     ) {
         DocumentEntity doc = documentService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Documento não encontrado"));
@@ -49,8 +54,8 @@ public class ReadingController {
                     p.setId("default-" + email);
                     p.setUserId(email);
                     p.setFontSize(18);
-                    p.setLineHeight(1.5);
-                    p.setColumnWidth(40);
+                    p.setLineHeight(1.6);
+                    p.setColumnWidth(78);
                     p.setTheme("LIGHT");
                     p.setFocusMode(false);
                     p.setReducedMotion(true);
@@ -60,22 +65,30 @@ public class ReadingController {
                     return p;
                 });
 
-        List<String> lines = textWrapper.wrap(doc.getContent(), profile.getColumnWidth());
+        int resolvedFontSize = fontSize != null ? fontSize : profile.getFontSize();
+        double resolvedLineHeight = lineHeight != null ? lineHeight : profile.getLineHeight();
+        int resolvedColumnWidth = columnWidth != null ? columnWidth : profile.getColumnWidth();
+        boolean resolvedDyslexiaMode = dyslexiaMode || profile.isDyslexiaFriendlyFont();
 
-        int resolvedPage = 1;
+        List<String> lines = textWrapper.wrap(doc.getContent(), resolvedColumnWidth);
 
+        int linesPerPage = calculateLinesPerPage(
+                resolvedFontSize,
+                resolvedLineHeight,
+                resolvedDyslexiaMode
+        );
+
+        int resolvedPage;
         if (page != null) {
             resolvedPage = page;
         } else {
-            var saved = readingProgressService.findByUserIdAndDocumentId(email, id);
-            if (saved.isPresent()) {
-                resolvedPage = saved.get().getCurrentPage();
-            }
+            resolvedPage = readingProgressService.findByUserIdAndDocumentId(email, id)
+                    .map(progress -> progress.getCurrentPage())
+                    .orElse(1);
         }
 
         int totalLines = lines.size();
-        int totalPages = (int) Math.ceil((double) totalLines / pageSize);
-
+        int totalPages = (int) Math.ceil((double) totalLines / linesPerPage);
         if (totalPages == 0) {
             totalPages = 1;
         }
@@ -83,17 +96,16 @@ public class ReadingController {
         if (resolvedPage < 1) {
             resolvedPage = 1;
         }
-
         if (resolvedPage > totalPages) {
             resolvedPage = totalPages;
         }
 
-        int start = (resolvedPage - 1) * pageSize;
-        int end = Math.min(totalLines, start + pageSize);
+        int start = (resolvedPage - 1) * linesPerPage;
+        int end = Math.min(totalLines, start + linesPerPage);
 
         List<String> pageContent = lines.subList(start, end);
 
-        readingProgressService.saveOrUpdate(email, id, resolvedPage, pageSize);
+        readingProgressService.saveOrUpdate(email, id, resolvedPage, linesPerPage);
 
         boolean lastPage = resolvedPage >= totalPages;
         boolean hasNext = resolvedPage < totalPages;
@@ -103,12 +115,27 @@ public class ReadingController {
                 doc.getTitle(),
                 pageContent,
                 resolvedPage,
-                pageSize,
+                linesPerPage,
                 totalPages,
                 totalLines,
                 lastPage,
                 hasNext,
                 hasPrevious
         );
+    }
+
+    private int calculateLinesPerPage(int fontSize, double lineHeight, boolean dyslexiaMode) {
+        int pageHeightPx = 1100;
+        int verticalPaddingPx = 96; // 48 top + 48 bottom
+        int usableHeightPx = pageHeightPx - verticalPaddingPx;
+
+        double effectiveLineHeightPx = fontSize * lineHeight;
+
+        if (dyslexiaMode) {
+            effectiveLineHeightPx += fontSize * 0.35;
+        }
+
+        int linesPerPage = (int) Math.floor(usableHeightPx / effectiveLineHeightPx);
+        return Math.max(linesPerPage, 1);
     }
 }

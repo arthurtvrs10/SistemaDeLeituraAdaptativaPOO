@@ -37,6 +37,7 @@ public class ReadingResponseDTO {
         this.hasNext = hasNext;
         this.hasPrevious = hasPrevious;
     }
+    
 
     public String getDocumentTitle() { return documentTitle; }
     public List<String> getLines() { return lines; }

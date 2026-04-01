@@ -6,9 +6,10 @@ import java.util.Objects;
 
 public class TextWrapper {
 
-    public List<String> wrap(String content, int columnWidth){
-        Objects.requireNonNull(content,"content n~ao pode ser nulo");
-        if (columnWidth <= 0){
+    public List<String> wrap(String content, int columnWidth) {
+        Objects.requireNonNull(content, "content não pode ser nulo");
+
+        if (columnWidth <= 0) {
             throw new IllegalArgumentException("ColumnWidth deve ser maior que zero");
         }
 
@@ -19,14 +20,14 @@ public class TextWrapper {
                 .replace("\r", "\n")
                 .trim();
 
-        if (normalized.isEmpty()){
+        if (normalized.isEmpty()) {
             return lines;
         }
 
         String[] paragraphs = normalized.split("\n");
 
-        for(String paragraph : paragraphs){
-            if(paragraph.isBlank()){
+        for (String paragraph : paragraphs) {
+            if (paragraph.isBlank()) {
                 lines.add("");
                 continue;
             }
@@ -34,10 +35,20 @@ public class TextWrapper {
             String[] words = paragraph.trim().split("\\s+");
             StringBuilder currentLine = new StringBuilder();
 
-            for (String word : words){
-                if(currentLine.length() == 0){
+            for (String word : words) {
+                if (word.length() > columnWidth) {
+                    if (currentLine.length() > 0) {
+                        lines.add(currentLine.toString());
+                        currentLine = new StringBuilder();
+                    }
+
+                    splitLongWord(word, columnWidth, lines);
+                    continue;
+                }
+
+                if (currentLine.length() == 0) {
                     currentLine.append(word);
-                } else if (currentLine.length() + 1 + word.length()<=columnWidth){
+                } else if (currentLine.length() + 1 + word.length() <= columnWidth) {
                     currentLine.append(" ").append(word);
                 } else {
                     lines.add(currentLine.toString());
@@ -48,8 +59,17 @@ public class TextWrapper {
             if (currentLine.length() > 0) {
                 lines.add(currentLine.toString());
             }
-
         }
+
         return lines;
+    }
+
+    private void splitLongWord(String word, int columnWidth, List<String> lines) {
+        int start = 0;
+        while (start < word.length()) {
+            int end = Math.min(start + columnWidth, word.length());
+            lines.add(word.substring(start, end));
+            start = end;
+        }
     }
 }
