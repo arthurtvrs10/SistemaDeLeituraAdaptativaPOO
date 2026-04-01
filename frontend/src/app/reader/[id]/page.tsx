@@ -171,7 +171,15 @@ export default function PDFReader() {
       try {
         setLoading(true);
 
-        const response = await api.get(`/reading/${id}?page=${currentPage}`);
+        const response = await api.get(`/reading/${id}`, {
+          params: {
+            page: currentPage,
+            fontSize: settings.fontSize,
+            lineHeight: settings.lineSpacing,
+            columnWidth: settings.columnWidth,
+            dyslexiaMode: settings.dyslexiaMode,
+          },
+        });
         setReadingData(response.data);
         setIsFallbackMode(false);
       } catch (err) {
@@ -184,7 +192,23 @@ export default function PDFReader() {
     }
 
     loadReading();
-  }, [id, currentPage]);
+  }, [
+    id,
+    currentPage,
+    settings.fontSize,
+    settings.lineSpacing,
+    settings.columnWidth,
+    settings.dyslexiaMode,
+  ]); 
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    settings.fontSize,
+    settings.lineSpacing,
+    settings.columnWidth,
+    settings.dyslexiaMode,
+  ]);
 
   const totalPages = readingData?.totalPages ?? FALLBACK_TOTAL_PAGES;
   const documentName = readingData?.documentTitle || `Documento ${id}`;
@@ -557,90 +581,6 @@ export default function PDFReader() {
                   </p>
                 ))}
 
-                <div
-                  className="border-l-4 p-4 mt-6"
-                  style={{
-                    backgroundColor: getHighlightBoxBackground(),
-                    borderLeftColor: settings.highContrast ? "#000000" : "#2563EB",
-                    borderLeftWidth: "4px",
-                    marginTop: `${parseFloat(getParagraphSpacing()) * 2}em`,
-                  }}
-                >
-                  <p style={{ fontSize: `${settings.fontSize * 0.875}px` }}>
-                    <strong style={{ fontWeight: settings.highContrast ? 700 : 600 }}>
-                      Leitura adaptativa:
-                    </strong>{" "}
-                    o conteúdo principal já está sendo renderizado com as preferências de
-                    leitura aplicadas, aproximando a experiência visual do leitor ao
-                    comportamento esperado no projeto.
-                  </p>
-                </div>
-
-                <div style={{ marginTop: `${parseFloat(getParagraphSpacing()) * 3}em` }}>
-                  <h2
-                    style={{
-                      fontSize: `${settings.fontSize * 1.5}px`,
-                      marginBottom: getParagraphSpacing(),
-                    }}
-                  >
-                    Estado atual da experiência
-                  </h2>
-
-                  <div
-                    className="border rounded p-4"
-                    style={{
-                      borderColor: settings.highContrast ? "#000000" : "#D1D5DB",
-                      borderWidth: "2px",
-                      marginBottom: getParagraphSpacing(),
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: `${settings.fontSize * 0.875}px`,
-                        marginBottom: "0.5em",
-                      }}
-                    >
-                      <strong>Modos ativos agora:</strong>
-                    </p>
-
-                    <ul
-                      className="ml-4"
-                      style={{
-                        listStyleType: "circle",
-                        fontSize: `${settings.fontSize * 0.875}px`,
-                      }}
-                    >
-                      {!settings.highContrast &&
-                        !settings.dyslexiaMode &&
-                        !settings.focusMode && <li>✓ Modo padrão</li>}
-
-                      {settings.highContrast && (
-                        <li>✓ Alto contraste com prioridade sobre as cores</li>
-                      )}
-
-                      {settings.dyslexiaMode && (
-                        <li>✓ Modo dislexia com tipografia e espaçamentos ampliados</li>
-                      )}
-
-                      {settings.focusMode && <li>✓ Modo foco com interface reduzida</li>}
-                    </ul>
-
-                    {settings.highContrast && settings.dyslexiaMode && (
-                      <p
-                        style={{
-                          fontSize: `${settings.fontSize * 0.875}px`,
-                          marginTop: "1em",
-                          padding: "8px",
-                          backgroundColor: settings.highContrast ? "#CCCCCC" : "#DBEAFE",
-                        }}
-                      >
-                        <strong>Combinação ativa:</strong> Alto contraste controla as cores,
-                        enquanto o modo dislexia controla tipografia, alinhamento e
-                        espaçamentos.
-                      </p>
-                    )}
-                  </div>
-                </div>
               </article>
             </div>
           </div>
