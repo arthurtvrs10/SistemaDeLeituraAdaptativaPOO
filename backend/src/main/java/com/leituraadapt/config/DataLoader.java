@@ -46,7 +46,7 @@ public class DataLoader {
             registerDTO.setId("user1");
             registerDTO.setName("Arthur");
             registerDTO.setEmail("arthur@gmail.com");
-            registerDTO.setPassword("123456");
+            registerDTO.setPassword("arthur123");
 
             userService.register(registerDTO);
 
