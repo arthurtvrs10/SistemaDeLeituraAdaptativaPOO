@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/h2-console/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() 
                 )
 
                 .addFilterBefore(
