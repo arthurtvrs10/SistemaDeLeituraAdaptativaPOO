@@ -14,7 +14,7 @@ public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id; // é salvo como um VARCHAR(36) OU BINARY(16)
-                    // "123e4567-e89b-12d3-a456-426614174000"
+                    // "123e4567-e89b-12d3-a456-426614174000"  -
 
     private String title; // representa o nome original do arquivo PDF
 
