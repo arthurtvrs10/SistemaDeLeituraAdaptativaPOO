@@ -3,6 +3,7 @@ package com.backend.mvc.service;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class DocumentService {
      * 6. Criar o objeto Document com os metadados.
      * 7. Salvar os metadados no banco usando o repository.
      */
+
     public Document uploadPdf(String title, MultipartFile file) throws Exception {
 
         // Verifica se o arquivo foi enviado
@@ -44,35 +46,49 @@ public class DocumentService {
             throw new IllegalArgumentException("O arquivo PDF é obrigatório.");
         }
 
-        // Recupera o nome original do arquivo enviado
+        // Recupera o nome original do arquivo enviado pelo usuário
         String originalFileName = file.getOriginalFilename();
 
-        // Verifica se o nome do arquivo é válido
+        // Verifica se o nome original do arquivo é válido
         if (originalFileName == null || originalFileName.isBlank()) {
             throw new IllegalArgumentException("O nome do arquivo é inválido.");
         }
 
-        // Verifica se o arquivo possui extensão .pdf
+        // Verifica se o arquivo enviado possui extensão .pdf
         if (!originalFileName.toLowerCase().endsWith(".pdf")) {
             throw new IllegalArgumentException("Apenas arquivos PDF são aceitos.");
         }
 
-        // Cria a pasta uploads/pdfs caso ela ainda não exista
-        Files.createDirectories(Path.of(uploadDir));
+        // Transforma o caminho "uploads/pdfs" em um caminho absoluto da máquina
+        // Exemplo:
+        // uploads/pdfs
+        // vira algo como:
+        // /home/tavares/IdeaProjects/SistemaDeLeituraAdaptativa/mvc/uploads/pdfs
+        Path uploadPath = Path.of(uploadDir).toAbsolutePath().normalize();
 
-        // Gera um nome único para evitar sobrescrever arquivos com o mesmo nome
+        // Cria a pasta de upload caso ela ainda não exista
+        // Se a pasta já existir, o Java simplesmente continua sem erro
+        Files.createDirectories(uploadPath);
+
+        // Gera um nome único para o arquivo
+        // Isso evita que um PDF sobrescreva outro PDF com o mesmo nome
         String savedFileName = System.currentTimeMillis() + "_" + originalFileName;
 
-        // Monta o caminho final onde o PDF será salvo
-        Path filePath = Path.of(uploadDir, savedFileName);
+        // Junta o caminho da pasta com o nome do arquivo
+        // Resultado final:
+        // /home/tavares/.../uploads/pdfs/1780528488617_teste.pdf
+        Path filePath = uploadPath.resolve(savedFileName);
 
-        // Salva fisicamente o arquivo PDF no servidor
-        file.transferTo(filePath.toFile());
+        // Salva uma cópia real do PDF enviado dentro da pasta uploads/pdfs
+        // Usamos Files.copy em vez de file.transferTo para evitar erro com caminho temporário do Tomcat
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Usa o PdfService para descobrir a quantidade total de páginas do PDF
+        // Depois que o PDF foi salvo, o PdfService abre o arquivo e conta suas páginas
         int totalPages = pdfService.getTotalPages(filePath.toFile());
 
-        // Cria a entidade Document com os metadados do PDF
+        // Cria o objeto Document com os metadados do PDF
+        // Importante: o PDF em si não vai para o banco
+        // O banco guarda apenas informações como título, nome, caminho e total de páginas
         Document document = new Document(
                 title,
                 originalFileName,
@@ -80,7 +96,7 @@ public class DocumentService {
                 totalPages
         );
 
-        // Salva os metadados no banco de dados e retorna o documento salvo
+        // Salva os metadados do documento no banco de dados
         return documentRepository.save(document);
     }
 

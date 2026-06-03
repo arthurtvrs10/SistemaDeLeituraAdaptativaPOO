@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 public class Document {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id; // é salvo como um VARCHAR(36) OU BINARY(16)
                     // "123e4567-e89b-12d3-a456-426614174000"  -
 
