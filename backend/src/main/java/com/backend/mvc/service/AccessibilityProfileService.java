@@ -111,7 +111,7 @@ public class AccessibilityProfileService {
     }
 
     // Aplica uma configuração de acessibilidade ao perfil informado
-    // Aqui usamos classe abstrata, sobrescrita, try...catch e thread
+    // Aqui usamos classe abstrata, herança, polimorfismo, sobrescrita e try...catch
     public AppliedAccessibilityResponseDTO applyConfiguration(Long id) {
 
         try {
@@ -143,31 +143,7 @@ public class AccessibilityProfileService {
             // O método chamado será o método sobrescrito da classe concreta
             String message = configuration.applyConfiguration(profile);
 
-            // Cria uma thread para simular processamento em segundo plano
-            Thread metricsThread = new Thread(() -> {
-                try {
-                    // Simula um processamento secundário
-                    Thread.sleep(3000);
-
-                    // Simula registro de métrica no terminal
-                    System.out.println("Métrica processada em segundo plano.");
-                    System.out.println("Perfil aplicado: " + profile.getName());
-                    System.out.println("Configuração usada: " + configuration.getConfigurationName());
-
-                } catch (InterruptedException e) {
-                    // Trata erro caso a thread seja interrompida
-                    System.out.println("Thread de métricas foi interrompida.");
-
-                    // Marca novamente a thread como interrompida
-                    Thread.currentThread().interrupt();
-                }
-            });
-
-            // Inicia a thread
-            // A API não precisa esperar essa thread terminar para responder ao cliente
-            metricsThread.start();
-
-            // Retorna a resposta principal imediatamente
+            // Retorna a resposta da configuração aplicada
             return new AppliedAccessibilityResponseDTO(
                     profile.getName(),
                     configuration.getConfigurationName(),
